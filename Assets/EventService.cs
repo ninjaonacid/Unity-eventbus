@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public class EventService : IEventService
+public class EventService : IEventService 
 {
     private readonly Dictionary<Type, SubscriptionsList<ISubscription<IEvent>>> _subscriptions;
     private readonly Dictionary<object, Type> _cachedTypes;
@@ -46,7 +46,7 @@ public class EventService : IEventService
     public void Subscribe<TEvent>(Action<TEvent> action) where TEvent : IEvent
     {
 
-        var type = _cachedTypes[action];
+        var type = typeof(TEvent);
 
         if (action == null)
         {
