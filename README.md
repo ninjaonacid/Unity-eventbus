@@ -35,6 +35,11 @@ public class EventTester : MonoBehaviour
     {
         Debug.Log(eventData.Message);
     }
+
+    private void OnDisable()
+    {
+        _eventService.Unsubscribe<MyEvent>(DoSomething);
+    }
 }
 ```
 Result: </br>
