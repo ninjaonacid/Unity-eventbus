@@ -21,6 +21,7 @@ Inject EventService in DI way or simply use it like a singletone.
 public class EventTester : MonoBehaviour
 {
     private IEventService _eventService;
+    
     private void Awake()
     {
         _eventService = new EventService();
@@ -36,4 +37,5 @@ public class EventTester : MonoBehaviour
     }
 }
 ```
-![Alt text](/relative/path/to/img.jpg?raw=true "Optional Title")
+Result: </br>
+![Alt text](/Assets/Scenes/Unity_02f9JQaIyY.png)
