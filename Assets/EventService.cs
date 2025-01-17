@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public class EventService : IEventService 
 {
@@ -16,36 +17,28 @@ public class EventService : IEventService
     {
         var type = eventItem.GetType();
 
-        if (!_subscriptions.ContainsKey(type))
+        if (!_subscriptions.TryGetValue(type, out var subscriptions))
         {
-            throw new Exception("Cant invoke event, doesnt present in the subscriptions");
-        }
-        var allSubscriptions = new SubscriptionsList<ISubscription<IEvent>>();
-
-
-        if (_subscriptions.ContainsKey(type))
-        {
-            allSubscriptions = _subscriptions[type];
+            return;
         }
 
-        foreach (var subscription in allSubscriptions)
+        foreach (var sub in subscriptions)
         {
             try
             {
-                subscription.Publish(eventItem);
+                sub.Publish(eventItem);
             }
             catch (Exception exception)
             {
-                throw new Exception("Invoke event exception");
+                Debug.LogException(exception);
             }
         }
 
-        allSubscriptions.Cleanup();
+        subscriptions.Cleanup();
     }
 
     public void Subscribe<TEvent>(Action<TEvent> action) where TEvent : IEvent
     {
-
         var type = typeof(TEvent);
 
         if (action == null)
@@ -53,33 +46,39 @@ public class EventService : IEventService
             throw new ArgumentNullException(nameof(action));
         }
 
-        if (!_subscriptions.ContainsKey(typeof(TEvent)))
+        if (!_subscriptions.TryGetValue(type, out var subscriptions))
         {
-            _subscriptions.Add(type, new SubscriptionsList<ISubscription<IEvent>>());
+            subscriptions = new SubscriptionsList<ISubscription<IEvent>>();
+            _subscriptions.Add(type, subscriptions);
         }
 
-
         _cachedTypes.Add(action, type);
-        _subscriptions[type].Add((new Subscription<TEvent>(action)));
-
+        subscriptions.Add(new Subscription<TEvent>(action));
     }
 
     public void Unsubscribe<TEvent>(Action<TEvent> action) where TEvent : IEvent
     {
-        var type = _cachedTypes[action];
-
-
-        if (_subscriptions.ContainsKey(type))
+        if (!_cachedTypes.TryGetValue(action, out var type))
         {
-            var allEventSubs = _subscriptions[type];
-            var subToRemove =
-                allEventSubs.FirstOrDefault(x =>
+            return;
+        }
+
+        if (!_subscriptions.TryGetValue(type, out var subscriptions))
+        {
+            return;
+        }
+
+        if (!_subscriptions.TryGetValue(type, out var subscription)) return;
+        ISubscription<IEvent> subToRemove =
+            subscriptions.FirstOrDefault(x =>
                 x.SubscriptionToken.Equals(action));
 
-            if (subToRemove != null)
-            {
-                _subscriptions[type].Remove(subToRemove);
-            }
+        if (subToRemove != null)
+        {
+            subscription.Remove(subToRemove);
         }
+
+        subscriptions.Cleanup();
     }
+    
 }
